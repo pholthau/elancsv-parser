@@ -77,16 +77,16 @@ public class SimpleParser {
 		}
 		
 		String tier = cmd.getOptionValue("tier");
+		if (tier == null) {
+			helpExit(opts, "Error: no tier given.");
+		}
+		
 		String[] tn = tier.split("::");
 		boolean numeric = false;
 		if (tn.length == 2 && tn[1].equals("num")) {
 			numeric = true;
 			tier = tn[0];
 		}
-		if (tier == null) {
-			helpExit(opts, "Error: no tier given.");
-		}
-		
 
 		format = "^" + format + "$";
 		format = format.replaceFirst("%V", "(?<V>.*?)");
