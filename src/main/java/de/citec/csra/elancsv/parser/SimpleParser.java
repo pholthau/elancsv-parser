@@ -16,6 +16,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.cli.BasicParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 
 /**
  *
@@ -40,21 +46,48 @@ public class SimpleParser {
 
 	}
 
-	private final static int VP = 0;
-	private final static int COND = 1;
-	private final static int ANNOTATOR = 2;
+	private static void helpExit(Options opts, String header) {
+		HelpFormatter formatter = new HelpFormatter();
+		formatter.printHelp("elancsv-parser [OPTION...]", header, opts, null);
+		System.exit(0);
+	}
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, ParseException {
 
-		String tier = args[1];
+		Options opts = new Options();
+		opts.addOption("file", true, "Tab-separated ELAN export file to load.");
+		opts.addOption("tier", true, "Tier to analyze. Optional: Append ::num to interpret annotations numerically.");
+		opts.addOption("format", true, "How to read information from the file name. %V -> participant, %A -> annoatator, %C -> condition, e.g. \"%V - %A\"");
+		opts.addOption("help", false, "Print this help and exit");
+
+		CommandLineParser parser = new BasicParser();
+		CommandLine cmd = parser.parse(opts, args);
+		if (cmd.hasOption("help")) {
+			helpExit(opts, "where OPTION includes:");
+		}
+		
+		String infile = cmd.getOptionValue("file");
+		if (infile == null) {
+			helpExit(opts, "Error: no file given.");
+		}
+
+		String format = cmd.getOptionValue("format");
+		if (format == null) {
+			helpExit(opts, "Error: no format given.");
+		}
+		
+		String tier = cmd.getOptionValue("tier");
 		String[] tn = tier.split("::");
 		boolean numeric = false;
 		if (tn.length == 2 && tn[1].equals("num")) {
 			numeric = true;
 			tier = tn[0];
 		}
+		if (tier == null) {
+			helpExit(opts, "Error: no tier given.");
+		}
+		
 
-		String format = args[2];
 		format = "^" + format + "$";
 		format = format.replaceFirst("%V", "(?<V>.*?)");
 		format = format.replaceFirst("%A", "(?<A>.*?)");
@@ -62,7 +95,7 @@ public class SimpleParser {
 		Pattern pa = Pattern.compile(format);
 
 		Map<String, Participant> participants = new HashMap<>();
-		BufferedReader br = new BufferedReader(new FileReader(args[0]));
+		BufferedReader br = new BufferedReader(new FileReader(infile));
 		String line;
 		while ((line = br.readLine()) != null) {
 			String[] parts = line.split("\t");
