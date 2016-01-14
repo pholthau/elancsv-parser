@@ -65,7 +65,7 @@ public class SimpleParser {
 		if (cmd.hasOption("help")) {
 			helpExit(opts, "where OPTION includes:");
 		}
-		
+
 		String infile = cmd.getOptionValue("file");
 		if (infile == null) {
 			helpExit(opts, "Error: no file given.");
@@ -75,12 +75,13 @@ public class SimpleParser {
 		if (format == null) {
 			helpExit(opts, "Error: no format given.");
 		}
-		
+
 		String tier = cmd.getOptionValue("tier");
 		if (tier == null) {
 			helpExit(opts, "Error: no tier given.");
 		}
-		
+
+//		TODO count values in annotations (e.g. search all robot occurrences)
 		String[] tn = tier.split("::");
 		boolean numeric = false;
 		if (tn.length == 2 && tn[1].equals("num")) {
@@ -97,9 +98,14 @@ public class SimpleParser {
 		Map<String, Participant> participants = new HashMap<>();
 		BufferedReader br = new BufferedReader(new FileReader(infile));
 		String line;
+		int lineno = 0;
 		while ((line = br.readLine()) != null) {
 			String[] parts = line.split("\t");
-
+			lineno++;
+			if (parts.length < 5) {
+				System.err.println("WARNING: line '" + lineno + "' too short '" + line + "'");
+				continue;
+			}
 			Annotation a = new Annotation(
 					Long.valueOf(parts[ElanFormat.START.field]),
 					Long.valueOf(parts[ElanFormat.STOP.field]),
